@@ -1,0 +1,20 @@
+FROM node
+
+# Add Dockerize binary to ensure deploys wait for Mongo
+
+ENV DOCKERIZE_VERSION v0.5.0
+RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
+    && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
+    && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+
+ADD ./node-express-mongoose-demo /usr/demoapp
+
+WORKDIR /usr/demoapp
+
+RUN npm install
+
+EXPOSE 3000
+
+ADD docker/entrypoints/entrypoint-app.sh /entrypoint.sh
+
+ENTRYPOINT [ "sh", "-c", "/entrypoint.sh" ]
