@@ -8,11 +8,11 @@ Log into the azabu-juban Jenkins instance and run the following jobs:
 
 mongoose/docker-build-image (optional) - Build the containers used in the deployment
 
-mongoose/deploy-aws-infrastructure - Get the IP address for the Nginx instance (This is also the Docker Swarm master)
+mongoose/deploy-aws-infrastructure - *Get the IP address for the Nginx instance* (This is also the Docker Swarm master)
 
-mongoose/deploy-secrets - Write secrets used by the application to Docker Secrets
+mongoose/deploy-secrets - Write docker secrets to the Swarm master
 
-mongoose/deploy-app - Deploy the application to mongoose-production.azabu-juban.com
+mongoose/deploy-app - Deploy the application to http://mongoose-production.azabu-juban.com
 
 Wait a minute or so until the application is deployed and visit the site for verification
 
