@@ -2,14 +2,26 @@
 
 This is the work I have put together to do a mock deployment of the Node Express Mongo Demo application.
 
-## Requirements
+## Getting started
 
-A Jenkins 2 server with Docker and Terraform installed - This has been targeted toward my pre-existing Jenkins setup and AWS account.
+Log into the azabu-juban Jenkins instance and run the following jobs:
+mongoose/docker-build-image (optional) - Build the containers used in the deployment
+mongoose/deploy-aws-infrastructure - Get the IP address for the Nginx instance (This is also the Docker Swarm master)
+mongoose/deploy-secrets - Write secrets used by the application to Docker Secrets
+mongoose/deploy-app - Deploy the application to mongoose-production.azabu-juban.com
+
+Wait a minute or so until the application is deployed and visit the site for verification
+
+## Jenkins Requirements
+
+Jenkins 2 server with Terraform and Docker CE installed
+AWS keypair with EC2, S3 and Route 53 permissions saved as secret text file
+EC2 instance keypair saved as secret text file
 
 ## Goals
 
-The Node application, MongoDB and Nginx have been containerized and will be deployed into a Docker swarm.
-Mongo is only accessible by web application containers, and the web containers are running on 3000 with all requests proxied in from nginx via port 80.
+Node application, MongoDB and Nginx have been containerized and will be deployed into a Docker swarm.
+MongoDB is only accessible by web application containers, and the web containers are running on tcp/3000 with all requests proxied in from nginx via port 80.
 A publicly accessible URL is created upon deployment of the infrastructure at mongoose-${ENVIRONMENT}.azabu-juban.com (My personal test domain).
 All S3 resources are created via a Jenkins job.
 
@@ -21,7 +33,7 @@ Automates the deployment of all resources defined in terraform, including EC2 in
 
 ### docker-build
 
-A generic job that builds all the docker containers and pushes them to my registry.
+A generic job that builds all the docker containers and pushes them to my registry in AWS.
 
 ### deploy-secrets
 
@@ -47,11 +59,16 @@ Creates the bucket required by the application for image storage.
 
 ### security groups
 
-Creates groups for each of the EC2 instances. Ensures that only nginx is world visible and can redirect traffic to web instances, mongo is only accessible by application containers, all instances can connect via swarm, and opens SSH to the instances from Jenkins.
+Creates security groups for each of the EC2 instances.
+**Ensures:**
++ Nginx is world visible and can redirect traffic to web containers
++ Mongo is only accessible by application containers
++ All instances can connect via swarm
++ Opens SSH to the instances from Jenkins
 
 ### join_swarm.sh
 
-Bootstraps the worker instances to the Swarm master. Used as a workaround for terraform's remote execution due to SSH problems.
+Script used by Terraform to bootstrap worker instances to the Swarm master. Used as a workaround for terraform's remote execution due to SSH problems.
 
 ## Docker images
 
@@ -66,27 +83,3 @@ An inherit Dockerfile that was not modified.
 ### Dockerfile-nginx
 
 Another inherit container that has the nginx proxy configuration added to it.
-
-## Areas of improvement
-
-There are a number of pieces that can be greatly improved with further development time
-
-### S3 bucket issue
-
-This is the first time I have used Docker secrets, and though I am successfully mounting the S3 credentials, I am still having difficulty getting the keys into the application container's environment correctly. Thus, the S3 image repository isn't working.
-
-### SSL
-
-SSL is not enabled in the NGINX container.
-
-### Error handling in Jenkins jobs
-
-Some elements of the Jenkins jobs are brittle, such as the credential update job.
-
-### Terraform state handling
-
-Currently Terraform state files are being stashed in a folder on the Jenkins master. I would prefer to use Consul as a backend for storage.
-
-### Environment definition
-
-All of the environment variables in the Node application are the same, as they are connecting over a Dockerized network with identical configurations. However I would be more comfortable being able to define the environment via a variable (related to the S3 problem)
